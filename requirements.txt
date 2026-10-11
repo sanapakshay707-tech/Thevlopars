@@ -1,0 +1,10 @@
+streamlit
+pymupdf
+sentence-transformers
+scikit-learn
+numpy
+pandas
+# Optional (install later only if core app works):
+# plotly
+# ollama
+# pytesseract
