@@ -18,7 +18,7 @@ class AnalysisResponse(BaseModel):
     parties: Parties = Field(default_factory=Parties, description="Extracted petitioner and respondent names")
     legalProvisions: List[str] = Field(default_factory=list, description="Sections, statutes, acts cited in the document")
     issues: List[str] = Field(default_factory=list, description="Core legal issues or points framed by the court")
-    summary: Optional[str] = Field(default="", description="Concise natural language summary of facts and reasoning")
+    summary: Optional[str] = Field(default="", description="Detailed, evidence-grounded numbered summary of the judgment's main points")
     outcome: Optional[str] = Field(default="N/A", description="Final judicial outcome, ruling, order, or N/A if interim")
     evidence: List[EvidenceItem] = Field(default_factory=list, description="Clickable evidence citations supporting extracted facts")
     error: Optional[str] = Field(default=None, description="Error message if analysis failed, else null")

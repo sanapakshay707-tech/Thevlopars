@@ -453,6 +453,7 @@ body {
   font-family: var(--font-serif);
   font-size: 0.925rem;
   line-height: 1.7;
+  white-space: pre-line;
   color: #334155;
   background: #fafafa;
   padding: 1rem;

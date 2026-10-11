@@ -22,7 +22,7 @@ Return ONLY a valid JSON object with EXACTLY this structure:
   },
   "legalProvisions": ["Exact cited legal sections/articles/acts, e.g. Section 420 IPC"],
   "issues": ["Key legal issues or questions framed by the court"],
-  "summary": "Concise summary of facts, arguments, and judge's reasoning",
+    "summary": "Detailed plain-text summary with 5-7 numbered main points covering the background, parties' positions, issues, applicable law, court's reasoning, and decision or procedural status",
   "outcome": "Final order / ruling, or 'N/A - Interim Order / No final outcome'",
   "keyQuotes": [
     {"field": "parties", "quote": "exact phrase from text naming the parties"},
@@ -65,9 +65,10 @@ Remember:
 1. Identify if Civil, Criminal, Constitutional, etc.
 2. List exact parties (Petitioner vs Respondent).
 3. List cited legal sections/statutes.
-4. Summarize the factual background and reasoning.
-5. If there is NO final decision (e.g. interim order, notice issued, matter adjourned), set outcome to "N/A - Interim order / No final outcome".
-6. In keyQuotes, include short exact phrases copied directly from the text as evidence."""
+4. Write a detailed summary as 5-7 numbered main points, using 1-2 sentences per point and aiming for about 180-250 words when the document supports that much detail. Cover the factual background, each side's arguments, issues before the court, relevant law, the court's reasoning, and the decision or current procedural status. Use fewer points for short documents; do not pad or invent details.
+5. Clearly distinguish allegations and arguments from facts the court found or accepted.
+6. If there is NO final decision (e.g. interim order, notice issued, matter adjourned), set outcome to "N/A - Interim order / No final outcome".
+7. In keyQuotes, include short exact phrases copied directly from the text as evidence."""
 
         try:
             llm_result = await self.client.generate_json(
