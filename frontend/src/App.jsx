@@ -164,7 +164,10 @@ export default function App() {
                   onSelectEvidenceByField={handleSelectEvidenceByField}
                 />
 
-                <SummaryCard summary={analysis.summary} />
+                <SummaryCard
+                  summary={analysis.summary}
+                  advocateSummary={analysis.advocateSummary}
+                />
 
                 <EvidenceViewer
                   evidence={analysis.evidence}

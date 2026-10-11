@@ -22,7 +22,8 @@ Return ONLY a valid JSON object with EXACTLY this structure:
   },
   "legalProvisions": ["Exact cited legal sections/articles/acts, e.g. Section 420 IPC"],
   "issues": ["Key legal issues or questions framed by the court"],
-    "summary": "Detailed plain-text summary with 5-7 numbered main points covering the background, parties' positions, issues, applicable law, court's reasoning, and decision or procedural status",
+    "summary": "A 5-7 point plain-language summary for a general reader",
+    "advocateSummary": "A 5-7 point legally focused summary for a junior advocate",
   "outcome": "Final order / ruling, or 'N/A - Interim Order / No final outcome'",
   "keyQuotes": [
     {"field": "parties", "quote": "exact phrase from text naming the parties"},
@@ -65,10 +66,11 @@ Remember:
 1. Identify if Civil, Criminal, Constitutional, etc.
 2. List exact parties (Petitioner vs Respondent).
 3. List cited legal sections/statutes.
-4. Write a detailed summary as 5-7 numbered main points, using 1-2 sentences per point and aiming for about 180-250 words when the document supports that much detail. Cover the factual background, each side's arguments, issues before the court, relevant law, the court's reasoning, and the decision or current procedural status. Use fewer points for short documents; do not pad or invent details.
-5. Clearly distinguish allegations and arguments from facts the court found or accepted.
-6. If there is NO final decision (e.g. interim order, notice issued, matter adjourned), set outcome to "N/A - Interim order / No final outcome".
-7. In keyQuotes, include short exact phrases copied directly from the text as evidence."""
+4. In "summary", write 5-7 numbered points in plain language for a general reader, aiming for 120-170 words when supported by the document. Explain what happened, what each side wanted, the court's decision or current status, and what it means in everyday terms. Briefly explain legal terms that are necessary.
+5. In "advocateSummary", write 5-7 numbered points for a junior advocate, aiming for 150-200 words when supported. Cover procedural posture, material facts, issues, each side's submissions, applicable provisions or precedents expressly cited, the court's reasoning and holding, relief granted or refused, and any next steps or unresolved issues apparent from the text.
+6. Keep both summaries accurate and grounded in the document. Clearly distinguish allegations and party submissions from facts the court found or accepted. Do not infer legal rules, procedural steps, or practical consequences not stated in the judgment. Use fewer points for short documents; do not pad.
+7. If there is NO final decision (e.g. interim order, notice issued, matter adjourned), set outcome to "N/A - Interim order / No final outcome" and make the pending status clear in both summaries.
+8. In keyQuotes, include short exact phrases copied directly from the text as evidence."""
 
         try:
             llm_result = await self.client.generate_json(
@@ -131,6 +133,7 @@ Remember:
             issues = []
 
         summary = str(llm_result.get("summary") or "").strip()
+        advocate_summary = str(llm_result.get("advocateSummary") or "").strip()
         outcome = str(llm_result.get("outcome") or "N/A").strip()
 
         # Evidence gathering and verification
@@ -179,6 +182,7 @@ Remember:
             legalProvisions=merged_provisions,
             issues=issues,
             summary=summary,
+            advocateSummary=advocate_summary or summary,
             outcome=outcome,
             evidence=evidence_items,
             error=None,
@@ -207,6 +211,7 @@ Remember:
             legalProvisions=heuristic_provisions,
             issues=["Extracted from judgment provisions"],
             summary=f"Automated fallback extraction. Text length: {len(pdf_doc.get_full_text())} characters across {pdf_doc.page_count} pages.",
+            advocateSummary="A junior-advocate summary could not be generated because the language model is unavailable.",
             outcome="N/A",
             evidence=evidence_items,
             error=f"Model inference warning: {error}",
