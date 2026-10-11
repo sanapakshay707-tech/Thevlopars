@@ -537,10 +537,32 @@ body {
   justify-content: space-between;
 }
 
-.pdf-iframe {
+.pdf-page-scroll {
   flex: 1;
   width: 100%;
-  border: none;
+  overflow: auto;
+  padding: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.pdf-page-scroll .react-pdf__Page {
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-evidence-highlight {
+  background: rgba(250, 204, 21, 0.62);
+  color: inherit;
+  outline: 1px solid rgba(202, 138, 4, 0.55);
+  border-radius: 2px;
+}
+
+.pdf-page-status {
+  color: #ffffff;
+  font-size: 0.85rem;
+  padding: 1rem;
 }
 
 /* Empty state */

@@ -1,7 +1,107 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Eye, FileText, CornerDownRight, Sparkles, ExternalLink } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
+
+function findEvidenceRanges(textItems, evidenceText) {
+  if (!textItems?.length || !evidenceText) return {};
+
+  const query = evidenceText
+    .replace(/^(?:\.\.\.|…)\s*/, '')
+    .replace(/\s*(?:\.\.\.|…)+$/, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!query) return {};
+
+  let pageText = '';
+  const positions = [];
+  textItems.forEach((item, itemIndex) => {
+    const itemText = item.str || '';
+    for (let charIndex = 0; charIndex < itemText.length; charIndex += 1) {
+      const char = itemText[charIndex];
+      if (/\s/.test(char)) {
+        if (pageText && !pageText.endsWith(' ')) {
+          pageText += ' ';
+          positions.push({ itemIndex, charIndex });
+        }
+      } else {
+        pageText += char.toLowerCase();
+        positions.push({ itemIndex, charIndex });
+      }
+    }
+    if (pageText && !pageText.endsWith(' ')) {
+      pageText += ' ';
+      positions.push({ itemIndex, charIndex: itemText.length });
+    }
+  });
+
+  const matchStart = pageText.trimEnd().indexOf(query);
+  if (matchStart === -1) return {};
+
+  const ranges = {};
+  for (const { itemIndex, charIndex } of positions.slice(matchStart, matchStart + query.length)) {
+    if (charIndex >= textItems[itemIndex].str.length) continue;
+    const range = ranges[itemIndex] || { start: charIndex, end: charIndex + 1 };
+    range.start = Math.min(range.start, charIndex);
+    range.end = Math.max(range.end, charIndex + 1);
+    ranges[itemIndex] = range;
+  }
+  return ranges;
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
+
+function renderTextItem(text, range) {
+  if (!range) return escapeHtml(text);
+  return `${escapeHtml(text.slice(0, range.start))}<mark class="pdf-evidence-highlight">${escapeHtml(text.slice(range.start, range.end))}</mark>${escapeHtml(text.slice(range.end))}`;
+}
 
 export default function DocumentPreview({ pdfBlobUrl, selectedEvidence, documentName }) {
+  const pageContainerRef = useRef(null);
+  const [pageWidth, setPageWidth] = useState(0);
+  const [textItems, setTextItems] = useState(null);
+
+  const activePage = selectedEvidence ? selectedEvidence.page : 1;
+  const highlightRanges = useMemo(
+    () => findEvidenceRanges(textItems, selectedEvidence?.text),
+    [textItems, selectedEvidence?.text],
+  );
+  const handleTextSuccess = useCallback(({ items }) => setTextItems(items), []);
+  const customTextRenderer = useCallback(
+    ({ str, itemIndex }) => renderTextItem(str, highlightRanges[itemIndex]),
+    [highlightRanges],
+  );
+
+  useEffect(() => {
+    const container = pageContainerRef.current;
+    if (!container) return undefined;
+
+    const observer = new ResizeObserver(([entry]) => {
+      setPageWidth(Math.floor(entry.contentRect.width));
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [pdfBlobUrl]);
+
+  useEffect(() => {
+    setTextItems(null);
+    if (pageContainerRef.current) pageContainerRef.current.scrollTop = 0;
+  }, [pdfBlobUrl, activePage]);
+
   if (!pdfBlobUrl) {
     return (
       <div className="card">
@@ -24,7 +124,6 @@ export default function DocumentPreview({ pdfBlobUrl, selectedEvidence, document
     );
   }
 
-  const activePage = selectedEvidence ? selectedEvidence.page : 1;
   const viewerUrl = `${pdfBlobUrl}#page=${activePage}&view=FitH`;
 
   return (
@@ -79,12 +178,24 @@ export default function DocumentPreview({ pdfBlobUrl, selectedEvidence, document
             <span>Viewing: {documentName}</span>
             <span>Target: Page {activePage}</span>
           </div>
-          <iframe
-            key={`${pdfBlobUrl}-${activePage}`}
-            src={viewerUrl}
-            title="Court Judgment PDF Preview"
-            className="pdf-iframe"
-          />
+          <div className="pdf-page-scroll" ref={pageContainerRef}>
+            <Document
+              file={pdfBlobUrl}
+              loading={<span className="pdf-page-status">Loading PDF…</span>}
+              error={<span className="pdf-page-status">Unable to render this PDF.</span>}
+            >
+              {pageWidth > 0 && (
+                <Page
+                  key={`${pdfBlobUrl}-${activePage}`}
+                  pageNumber={activePage}
+                  width={Math.min(pageWidth - 24, 760)}
+                  onGetTextSuccess={handleTextSuccess}
+                  customTextRenderer={customTextRenderer}
+                  renderAnnotationLayer={false}
+                />
+              )}
+            </Document>
+          </div>
         </div>
       </div>
     </div>
